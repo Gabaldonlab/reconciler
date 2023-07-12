@@ -83,18 +83,22 @@ rule mark_HGT:
         dl=outdir+"phylome_{code}/results/phylome_{code}_DL_rates.tsv",
         dtl=outdir+"phylome_{code}/results/phylome_{code}_DTL_rates.tsv"
     output:
-        ids=outdir+"phylome_{code}/results/phylome_{code}_HGT.ids",
-        files=temp(outdir+"phylome_{code}/results/phylome_{code}_HGT.tmp"),
+        df=outdir+"phylome_{code}/results/phylome_{code}_HGT.tsv",
+        # ids=outdir+"phylome_{code}/results/phylome_{code}_HGT.ids",
+        files=outdir+"phylome_{code}/results/phylome_{code}_HGT.paths",
         plot=outdir+"phylome_{code}/results/phylome_{code}_HGT.svg"
     params:
-        t=config['thirdkind_collapse']
+        alpha=config['alpha'],
+        t=config['thirdkind_collapse'],
+        tk_config=config['thirdkind_config']
     shell:
         """
-Rscript scripts/mark_HGT.R -d {input.dl} -t {input.dtl} -o {output.ids}
-recdir=$(dirname {input.dl} | sed 's/results/generax_DTL/')
-find $recdir -name "*xml" | grep -f {output.ids} > {output.files}
-thirdkind -f {output.files} -m -t {params.t} -x -T 0 -L -o {output.plot}
+recdir=$(dirname {input.dl} | sed 's/results/generax_DTL\/reconciliations/')
+Rscript scripts/mark_HGT.R -d {input.dl} -t {input.dtl} -o {output.df} -r $recdir -f {output.files} -s {params.alpha}
+thirdkind -f {output.files} -m -t {params.t} -x -T 0 -o {output.plot} -c {params.tk_config}
 """
+# -L to landscape mode
+# convert -units PixelsPerInch  -density 300 test.svg test.png
 
 
 # TODO

@@ -3,5 +3,11 @@ sptrees: "data/sptrees/"
 outdir: "output/"
 datadir: "/gpfs/projects/bsc40/current/gmutti/projects/reconciliation/species_tree/output/data/"
 
+
 # params
+# significance level for LRT test
+alpha: 0.05
+
+# TK params
 thirdkind_collapse: 0
+thirdkind_config: "data/configs/tk_config.txt"

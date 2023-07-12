@@ -7,17 +7,15 @@ option_list = list(
                 help="code phylomedb", dest = "code"),
     make_option(c("-o", "--output"), type="character", default=NULL, 
                 help="output prefix", dest = "output")
-    # make_option(c("-a","--approximate"), type = "logical", default=FALSE, action = "store_true",
-    #             help="if active, reduce matrix by approximate method", dest = "approx")
 )
 
 opt_parser = OptionParser(option_list=option_list)
 opt = parse_args(opt_parser)
 
 # opt <- NULL
-# opt$input <- "output/reconciliation/phylome_0845/generax_DTL"
-# opt$code <- "0845"
-# opt$output <- "test/test_results.png"
+# opt$input <- "output/phylome_0960/generax_DTL/"
+# opt$code <- "0960"
+# opt$output <- "output/phylome_0960/results/phylome_0960_DTL_rates.tsv"
 
 suppressMessages(library(tidyverse))
 suppressMessages(library(patchwork))
@@ -30,9 +28,7 @@ is_DTL <- FALSE
 
 
 dir.create(dirname(opt$output), showWarnings = FALSE, recursive = T)
-# prefix <- paste0(opt$output,"/generax_", opt$code, "_", opt$model)
 prefix <- gsub("_rates.tsv", "", opt$output)
-
 
 grax_files <- list.files(opt$input, full.names = T)
 
@@ -118,7 +114,6 @@ df_rates <- read_delim(ecounts_files, id="gene", delim = ":",
     pivot_wider(id_cols = gene, names_from = event, values_from = n) %>% 
     left_join(df_rates)
 
-
 rates_plot <- select(df_rates, c(gene, contains("rate"))) %>% 
     pivot_longer(!gene) %>% 
     mutate(name=gsub("_rate", "", name)) %>% 
@@ -139,14 +134,10 @@ transfer_files <- transfer_files[which(file.size(transfer_files)>0)]
 
 if (length(transfer_files)>0){
     is_DTL <- TRUE
-    transfers <- map_df(transfer_files, ~read_delim(., delim = " ", 
-                                                    col_names = c("from", "to"), show_col_types = FALSE)) %>% 
-        # read_delim(transfer_files, delim = " ", col_names = c("from", "to"),
-        #                     show_col_types = FALSE) %>% 
-        group_by(from, to) %>% 
-        count() %>% 
+    transfers <- read_delim(transfer_files, delim = " ", col_names = c("from", "to"), show_col_types = FALSE) %>% 
+        group_by(from, to) %>%
+        count() %>%
         filter(!is.na(from))
-
     transfer_plot <- ggtree(sptree, layout = "circular") +
         geom_tiplab() +
         geom_taxalink(data = filter(transfers, n>quantile(transfers$n, .75)), 
@@ -164,7 +155,6 @@ if (length(transfer_files)>0){
         theme_bw()
 }
 
-
 ## FINAL PLOT
 if (is_DTL) {
     dash <- (plot_presence/rates_plot/events_plot) | (sptreeplot/transfer_plot)
@@ -175,7 +165,7 @@ if (is_DTL) {
 
 
 # final RESULTS
-ggsave(paste0(prefix, "_results.png"), dash, dpi = 300, width = 15, height = 15)
+ggsave(paste0(prefix, "_results.pdf"), dash, width = 13, height = 13)
 write_delim(spcounts, file = paste0(prefix, "_spcounts.tsv"), delim = "\t")
 write_delim(df_rates, file = opt$output, delim = "\t")
 
